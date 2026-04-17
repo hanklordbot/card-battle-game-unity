@@ -1,7 +1,11 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using CardBattle.Game;
+using CardBattle.Scene;
+using CardBattle.Audio;
+using CardBattle.VFX;
 
 namespace CardBattle.Editor
 {
@@ -12,67 +16,94 @@ namespace CardBattle.Editor
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-            // Camera setup (45° top-down)
+            // === Camera (45° top-down) ===
             var cam = Camera.main;
             cam.transform.position = new Vector3(0, 8f, -5f);
             cam.transform.rotation = Quaternion.Euler(55f, 0, 0);
             cam.backgroundColor = new Color(0.05f, 0.05f, 0.12f);
-            cam.orthographic = false;
             cam.fieldOfView = 45f;
+            cam.gameObject.AddComponent<CameraController>();
 
-            // Directional Light
+            // === Directional Light ===
             var light = GameObject.Find("Directional Light");
-            if (light) {
-                light.transform.rotation = Quaternion.Euler(50f, -30f, 0);
-                light.GetComponent<Light>().intensity = 1.2f;
-            }
+            if (light) { light.transform.rotation = Quaternion.Euler(50f, -30f, 0); light.GetComponent<Light>().intensity = 1.2f; }
 
-            // Battle Field (plane)
+            // === Battle Field ===
             var field = GameObject.CreatePrimitive(PrimitiveType.Plane);
             field.name = "BattleField";
-            field.transform.position = Vector3.zero;
             field.transform.localScale = new Vector3(1.6f, 1, 1);
             var fieldMat = new Material(Shader.Find("Standard"));
             fieldMat.color = new Color(0.1f, 0.12f, 0.18f);
             field.GetComponent<Renderer>().material = fieldMat;
+            field.AddComponent<BattleFieldSetup>();
 
-            // Card zones - Player Monster (5 slots)
-            CreateCardZones("PlayerMonsterZone", new Vector3(-2.4f, 0.01f, -1f), 5, Color.green);
-            // Card zones - Player Spell/Trap (5 slots)
-            CreateCardZones("PlayerSpellZone", new Vector3(-2.4f, 0.01f, -2.2f), 5, Color.cyan);
-            // Card zones - Opponent Monster (5 slots)
-            CreateCardZones("OpponentMonsterZone", new Vector3(-2.4f, 0.01f, 1f), 5, Color.red);
-            // Card zones - Opponent Spell/Trap (5 slots)
-            CreateCardZones("OpponentSpellZone", new Vector3(-2.4f, 0.01f, 2.2f), 5, Color.magenta);
+            // === Card Zones ===
+            CreateCardZones("PlayerMonsterZone", new Vector3(-2.4f, 0.01f, -1f), 5, new Color(0, 1, 0, 0.3f));
+            CreateCardZones("PlayerSpellZone", new Vector3(-2.4f, 0.01f, -2.2f), 5, new Color(0, 1, 1, 0.3f));
+            CreateCardZones("OpponentMonsterZone", new Vector3(-2.4f, 0.01f, 1f), 5, new Color(1, 0, 0, 0.3f));
+            CreateCardZones("OpponentSpellZone", new Vector3(-2.4f, 0.01f, 2.2f), 5, new Color(1, 0, 1, 0.3f));
 
-            // Game Manager
+            // === Game Manager (core game logic) ===
             var gm = new GameObject("GameManager");
-            gm.AddComponent<CardBattle.Game.GameManager>();
+            gm.AddComponent<GameManager>();
 
-            // Canvas for UI
+            // === Audio System ===
+            var audio = new GameObject("AudioSystem");
+            audio.AddComponent<AudioManager>();
+            audio.AddComponent<BGMController>();
+            audio.AddComponent<SFXPool>();
+
+            // === VFX System ===
+            var vfx = new GameObject("VFXSystem");
+            vfx.AddComponent<SummonVFX>();
+            vfx.AddComponent<BattleVFX>();
+            vfx.AddComponent<LPVFX>();
+            vfx.AddComponent<ResultVFX>();
+
+            // === UI Canvas ===
             var canvas = new GameObject("Canvas");
             var c = canvas.AddComponent<Canvas>();
             c.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.AddComponent<UnityEngine.UI.CanvasScaler>();
-            canvas.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            var scaler = canvas.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            canvas.AddComponent<GraphicRaycaster>();
+            canvas.AddComponent<CardBattle.UI.BattleUI>();
 
-            // EventSystem
+            // --- LP Bars ---
+            CreateLPBar(canvas.transform, "Player1LP", new Vector2(200, -40), Color.green);
+            CreateLPBar(canvas.transform, "Player2LP", new Vector2(200, 40), Color.red);
+
+            // --- Phase Buttons ---
+            CreateButton(canvas.transform, "NextPhaseBtn", "▶ 下一階段", new Vector2(0, -480), new Vector2(200, 50));
+            CreateButton(canvas.transform, "SurrenderBtn", "🏳 投降", new Vector2(800, -480), new Vector2(140, 40));
+
+            // --- Turn Label ---
+            var turnLabel = CreateText(canvas.transform, "TurnLabel", "我方回合", new Vector2(0, 480), 28);
+
+            // === EventSystem ===
             var es = new GameObject("EventSystem");
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();
             es.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
 
-            // Save scene
-            string path = "Assets/Scenes/BattleScene.unity";
+            // === Save ===
             System.IO.Directory.CreateDirectory("Assets/Scenes");
-            EditorSceneManager.SaveScene(scene, path);
-            Debug.Log($"BattleScene created at {path}");
-            EditorUtility.DisplayDialog("Scene Generated", "BattleScene.unity has been created in Assets/Scenes/", "OK");
+            EditorSceneManager.SaveScene(scene, "Assets/Scenes/BattleScene.unity");
+            Debug.Log("✅ BattleScene created with all scripts attached!");
+            EditorUtility.DisplayDialog("Scene Generated",
+                "BattleScene.unity created with:\n" +
+                "• GameManager (core logic)\n" +
+                "• BattleFieldSetup + CameraController\n" +
+                "• AudioManager + BGM + SFX\n" +
+                "• VFX (Summon/Battle/LP/Result)\n" +
+                "• BattleUI + LP bars + Buttons\n\n" +
+                "Press Play to start!", "OK");
         }
 
-        static void CreateCardZones(string parentName, Vector3 startPos, int count, Color color)
+        static void CreateCardZones(string name, Vector3 start, int count, Color color)
         {
-            var parent = new GameObject(parentName);
-            parent.transform.position = startPos;
+            var parent = new GameObject(name);
+            parent.transform.position = start;
             for (int i = 0; i < count; i++)
             {
                 var slot = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -82,16 +113,70 @@ namespace CardBattle.Editor
                 slot.transform.rotation = Quaternion.Euler(90, 0, 0);
                 slot.transform.localScale = new Vector3(0.7f, 1f, 1f);
                 var mat = new Material(Shader.Find("Standard"));
-                mat.color = new Color(color.r, color.g, color.b, 0.3f);
-                mat.SetFloat("_Mode", 3); // Transparent
+                mat.color = color;
+                mat.SetFloat("_Mode", 3);
                 mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                 mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                 mat.SetInt("_ZWrite", 0);
-                mat.DisableKeyword("_ALPHATEST_ON");
                 mat.EnableKeyword("_ALPHABLEND_ON");
                 mat.renderQueue = 3000;
                 slot.GetComponent<Renderer>().material = mat;
             }
+        }
+
+        static void CreateLPBar(Transform parent, string name, Vector2 pos, Color color)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = new Vector2(300, 30);
+            var slider = go.AddComponent<Slider>();
+            slider.maxValue = 8000;
+            slider.value = 8000;
+
+            var bg = new GameObject("Background");
+            bg.transform.SetParent(go.transform, false);
+            var bgImg = bg.AddComponent<Image>();
+            bgImg.color = new Color(0.2f, 0.2f, 0.2f);
+            bg.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 30);
+
+            var fill = new GameObject("Fill");
+            fill.transform.SetParent(go.transform, false);
+            var fillImg = fill.AddComponent<Image>();
+            fillImg.color = color;
+            fill.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 30);
+            slider.fillRect = fill.GetComponent<RectTransform>();
+        }
+
+        static GameObject CreateButton(Transform parent, string name, string label, Vector2 pos, Vector2 size)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+            var img = go.AddComponent<Image>();
+            img.color = new Color(0.2f, 0.4f, 0.8f);
+            go.AddComponent<Button>();
+            CreateText(go.transform, "Label", label, Vector2.zero, 18);
+            return go;
+        }
+
+        static GameObject CreateText(Transform parent, string name, string text, Vector2 pos, int fontSize)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rt = go.AddComponent<RectTransform>();
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = new Vector2(400, 50);
+            var t = go.AddComponent<Text>();
+            t.text = text;
+            t.fontSize = fontSize;
+            t.color = Color.white;
+            t.alignment = TextAnchor.MiddleCenter;
+            t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            return go;
         }
     }
 }
