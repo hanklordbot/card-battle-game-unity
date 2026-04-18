@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using CardBattle.Core;
 using CardBattle.UI;
+using CardBattle.Scene;
 
 namespace CardBattle.Game
 {
@@ -24,8 +27,13 @@ namespace CardBattle.Game
         private BattleUI _ui;
         private FieldRenderer _field;
         private PhaseIndicator _phaseIndicator;
+        private BattleFieldSetup _fieldSetup;
         private int _selectedHandIndex = -1;
         private int _selectedAttackerIndex = -1;
+
+        // 3D field card objects
+        private GameObject[] _p1FieldCards = new GameObject[DuelConstants.MONSTER_ZONE_SIZE];
+        private GameObject[] _p2FieldCards = new GameObject[DuelConstants.MONSTER_ZONE_SIZE];
 
         private void Awake()
         {
@@ -46,6 +54,7 @@ namespace CardBattle.Game
             _ui = FindFirstObjectByType<BattleUI>();
             _field = FindFirstObjectByType<FieldRenderer>();
             _phaseIndicator = FindFirstObjectByType<PhaseIndicator>();
+            _fieldSetup = FindFirstObjectByType<BattleFieldSetup>();
             if (_ui != null)
             {
                 _ui.OnEndPhaseClicked += HandleEndPhase;
@@ -79,6 +88,95 @@ namespace CardBattle.Game
             _ui.SetButtonsInteractable(DuelState.turnPlayer == 0 && DuelState.result == DuelResult.Ongoing);
             _field?.UpdateField(DuelState);
             _phaseIndicator?.UpdatePhase(DuelState.phase);
+            SyncFieldCards3D();
+        }
+
+        private void SyncFieldCards3D()
+        {
+            if (DuelState == null) return;
+            SyncZone3D(DuelState.players[0].monsterZone, _p1FieldCards, 0);
+            SyncZone3D(DuelState.players[1].monsterZone, _p2FieldCards, 1);
+        }
+
+        private void SyncZone3D(FieldCard[] zone, GameObject[] visuals, int player)
+        {
+            for (int i = 0; i < DuelConstants.MONSTER_ZONE_SIZE; i++)
+            {
+                // Remove visual if slot is now empty
+                if (zone[i] == null)
+                {
+                    if (visuals[i] != null) { Destroy(visuals[i]); visuals[i] = null; }
+                    continue;
+                }
+
+                // Already has correct visual
+                if (visuals[i] != null) continue;
+
+                // Get slot position from scene zone parents
+                Transform slot = GetSlotTransform(player, i);
+                if (slot == null) continue;
+
+                var card = zone[i].card;
+                bool faceUp = zone[i].position == Position.FaceUpAttack || zone[i].position == Position.FaceUpDefense;
+
+                // Create 3D card quad at slot position
+                var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                go.name = $"FieldCard_{player}_{i}_{card.name}";
+                go.transform.position = slot.position + Vector3.up * 0.02f;
+                go.transform.rotation = Quaternion.Euler(90, 0, 0);
+                go.transform.localScale = new Vector3(0.65f, 0.95f, 1f);
+
+                var rend = go.GetComponent<Renderer>();
+                var mat = new Material(Shader.Find("Standard"));
+                if (faceUp)
+                {
+                    mat.color = CardHelper.IsMonster(card)
+                        ? new Color(0.8f, 0.65f, 0.2f)
+                        : new Color(0.2f, 0.6f, 0.3f);
+                }
+                else
+                {
+                    mat.color = new Color(0.3f, 0.15f, 0.1f);
+                }
+                rend.material = mat;
+
+                // Add floating text via TextMesh
+                if (faceUp)
+                {
+                    var textGo = new GameObject("Label");
+                    textGo.transform.SetParent(go.transform, false);
+                    textGo.transform.localPosition = new Vector3(0, 0, -0.01f);
+                    textGo.transform.localRotation = Quaternion.identity;
+                    textGo.transform.localScale = new Vector3(0.08f, 0.06f, 1f);
+                    var tm = textGo.AddComponent<TextMesh>();
+                    tm.text = $"{card.name}\n{card.atk}/{card.def}";
+                    tm.fontSize = 32;
+                    tm.characterSize = 0.5f;
+                    tm.anchor = TextAnchor.MiddleCenter;
+                    tm.alignment = TextAlignment.Center;
+                    tm.color = Color.white;
+                    // Use CJK font if available
+                    if (FontManager.CJKFont != null) tm.font = FontManager.CJKFont;
+                }
+
+                visuals[i] = go;
+            }
+        }
+
+        private Transform GetSlotTransform(int player, int slotIndex)
+        {
+            // Try BattleFieldSetup references first
+            if (_fieldSetup != null)
+            {
+                var slot = _fieldSetup.GetMonsterSlot(player, slotIndex);
+                if (slot != null) return slot;
+            }
+            // Fallback: find by name
+            string zoneName = player == 0 ? "PlayerMonsterZone" : "OpponentMonsterZone";
+            var zone = GameObject.Find(zoneName);
+            if (zone == null) return null;
+            var child = zone.transform.Find($"Slot_{slotIndex}");
+            return child;
         }
 
         // === Button Handlers ===

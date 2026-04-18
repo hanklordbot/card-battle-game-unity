@@ -16,8 +16,10 @@ namespace CardBattle.Scene
 
         private void Start()
         {
+            // Keep initial position set in scene (top-down view)
             targetPosition = transform.position;
             targetZoom = transform.position.y;
+            enabled = false; // Disable dynamic movement for top-down view
         }
 
         private void Update()
