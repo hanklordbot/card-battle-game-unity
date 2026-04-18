@@ -47,6 +47,10 @@ namespace CardBattle.Editor
             var gm = new GameObject("GameManager");
             gm.AddComponent<GameManager>();
 
+            // === Font Manager (CJK font support) ===
+            var fm = new GameObject("FontManager");
+            fm.AddComponent<CardBattle.UI.FontManager>();
+
             // === Audio System ===
             var audio = new GameObject("AudioSystem");
             audio.AddComponent<AudioManager>();
