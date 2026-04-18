@@ -22,6 +22,8 @@ namespace CardBattle.Game
         [SerializeField] private float aiTurnDelay = 1.0f;
 
         private BattleUI _ui;
+        private FieldRenderer _field;
+        private PhaseIndicator _phaseIndicator;
         private int _selectedHandIndex = -1;
         private int _selectedAttackerIndex = -1;
 
@@ -42,6 +44,8 @@ namespace CardBattle.Game
         private void Start()
         {
             _ui = FindFirstObjectByType<BattleUI>();
+            _field = FindFirstObjectByType<FieldRenderer>();
+            _phaseIndicator = FindFirstObjectByType<PhaseIndicator>();
             if (_ui != null)
             {
                 _ui.OnEndPhaseClicked += HandleEndPhase;
@@ -73,6 +77,8 @@ namespace CardBattle.Game
             _ui.UpdatePhase(DuelState.phase, DuelState.turnPlayer == 0, DuelState.turnCount);
             _ui.UpdateEndPhaseButtonText(DuelState.phase);
             _ui.SetButtonsInteractable(DuelState.turnPlayer == 0 && DuelState.result == DuelResult.Ongoing);
+            _field?.UpdateField(DuelState);
+            _phaseIndicator?.UpdatePhase(DuelState.phase);
         }
 
         // === Button Handlers ===
