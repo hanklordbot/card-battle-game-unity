@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using CardBattle.Core;
+using CardBattle.UI;
 
 namespace CardBattle.Game
 {
@@ -20,6 +21,8 @@ namespace CardBattle.Game
 
         [SerializeField] private float aiTurnDelay = 1.0f;
 
+        private BattleUI _ui;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -34,6 +37,12 @@ namespace CardBattle.Game
             CardDB.LoadDefaultCards();
         }
 
+        private void Start()
+        {
+            _ui = FindFirstObjectByType<BattleUI>();
+            StartGame();
+        }
+
         public void StartGame()
         {
             var deck1 = CardDB.BuildTestDeck();
@@ -41,6 +50,16 @@ namespace CardBattle.Game
             DuelState = DuelEngine.CreateDuelState(deck1, deck2);
             SetState(GameState.InBattle);
             Log("Duel started!");
+            RefreshUI();
+        }
+
+        public void RefreshUI()
+        {
+            if (_ui == null || DuelState == null) return;
+            _ui.UpdateLP(DuelState.players[0].lp, DuelState.players[1].lp);
+            _ui.UpdateHand(DuelState.players[0].hand);
+            _ui.UpdatePhase(DuelState.phase, DuelState.turnPlayer == 0, DuelState.turnCount);
+            _ui.UpdateEndPhaseButtonText(DuelState.phase);
         }
 
         public void EndGame(DuelResult result)

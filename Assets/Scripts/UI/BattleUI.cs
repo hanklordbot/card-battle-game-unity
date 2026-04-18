@@ -99,6 +99,13 @@ namespace CardBattle.UI
             _displayLP1 = DuelConstants.INITIAL_LP;
             _displayLP2 = DuelConstants.INITIAL_LP;
 
+            // Auto-find HandContainer if not assigned
+            if (handContainer == null)
+            {
+                var hc = transform.Find("HandContainer");
+                if (hc != null) handContainer = hc;
+            }
+
             endPhaseButton?.onClick.AddListener(() => OnEndPhaseClicked?.Invoke());
             attackButton?.onClick.AddListener(() => OnAttackClicked?.Invoke());
             summonButton?.onClick.AddListener(() => OnSummonClicked?.Invoke());
@@ -215,16 +222,62 @@ namespace CardBattle.UI
             foreach (var go in _handCards) Destroy(go);
             _handCards.Clear();
 
-            if (handContainer == null || handCardPrefab == null) return;
+            if (handContainer == null) return;
 
             for (int i = 0; i < hand.Count; i++)
             {
-                var go = Instantiate(handCardPrefab, handContainer);
                 var card = hand[i];
                 int idx = i;
 
+                GameObject go;
+                if (handCardPrefab != null)
+                {
+                    go = Instantiate(handCardPrefab, handContainer);
+                }
+                else
+                {
+                    // Create card UI programmatically
+                    go = new GameObject($"HandCard_{i}");
+                    go.transform.SetParent(handContainer, false);
+                    var rt = go.AddComponent<RectTransform>();
+                    rt.sizeDelta = new Vector2(100, 140);
+                    rt.anchoredPosition = new Vector2(i * 110 - (hand.Count - 1) * 55, 0);
+
+                    var img = go.AddComponent<Image>();
+                    img.color = CardHelper.IsMonster(card)
+                        ? new Color(0.6f, 0.5f, 0.2f, 1f)
+                        : CardHelper.IsSpell(card)
+                            ? new Color(0.2f, 0.5f, 0.3f, 1f)
+                            : new Color(0.5f, 0.2f, 0.4f, 1f);
+
+                    var outline = go.AddComponent<Outline>();
+                    outline.effectColor = Color.clear;
+                    outline.enabled = false;
+                }
+
                 // Set card name text
                 var nameText = go.GetComponentInChildren<Text>();
+                if (nameText == null)
+                {
+                    var textGo = new GameObject("CardText");
+                    textGo.transform.SetParent(go.transform, false);
+                    var textRt = textGo.AddComponent<RectTransform>();
+                    textRt.anchorMin = Vector2.zero;
+                    textRt.anchorMax = Vector2.one;
+                    textRt.sizeDelta = Vector2.zero;
+                    textRt.offsetMin = new Vector2(4, 4);
+                    textRt.offsetMax = new Vector2(-4, -4);
+                    nameText = textGo.AddComponent<Text>();
+                    nameText.fontSize = 12;
+                    nameText.color = Color.white;
+                    nameText.alignment = TextAnchor.MiddleCenter;
+                    // Apply CJK font if available
+                    if (FontManager.CJKFont != null)
+                        nameText.font = FontManager.CJKFont;
+                    else
+                        nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                }
+
                 if (nameText != null)
                 {
                     nameText.text = CardHelper.IsMonster(card) ? $"{card.name}\n{card.atk}/{card.def}" : card.name;
@@ -232,7 +285,9 @@ namespace CardBattle.UI
 
                 // Click handler
                 var btn = go.GetComponent<Button>();
-                if (btn != null) btn.onClick.AddListener(() => OnHandCardClicked?.Invoke(idx));
+                if (btn == null) btn = go.AddComponent<Button>();
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(() => OnHandCardClicked?.Invoke(idx));
 
                 _handCards.Add(go);
             }

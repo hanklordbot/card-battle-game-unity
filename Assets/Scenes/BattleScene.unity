@@ -6463,7 +6463,7 @@ MonoBehaviour:
   phaseActiveColor: {r: 1, g: 0.83, b: 0.23, a: 1}
   phaseInactiveColor: {r: 0.4, g: 0.4, b: 0.4, a: 1}
   phasePastColor: {r: 0.6, g: 0.5, b: 0.2, a: 1}
-  handContainer: {fileID: 0}
+  handContainer: {fileID: 300100120}
   handCardPrefab: {fileID: 0}
   previewPanel: {fileID: 0}
   previewName: {fileID: 0}
