@@ -50,8 +50,7 @@ namespace CardBattle.Editor
             // === Audio System ===
             var audio = new GameObject("AudioSystem");
             audio.AddComponent<AudioManager>();
-            audio.AddComponent<BGMController>();
-            audio.AddComponent<SFXPool>();
+            // BGMController and SFXPool are created dynamically by AudioManager.Awake()
 
             // === VFX System ===
             var vfx = new GameObject("VFXSystem");
@@ -72,14 +71,47 @@ namespace CardBattle.Editor
 
             // --- LP Bars ---
             CreateLPBar(canvas.transform, "Player1LP", new Vector2(200, -40), Color.green);
-            CreateLPBar(canvas.transform, "Player2LP", new Vector2(200, 40), Color.red);
+            CreateLPBar(canvas.transform, "Player2LP", new Vector2(-200, -40), Color.red);
 
-            // --- Phase Buttons ---
-            CreateButton(canvas.transform, "NextPhaseBtn", "▶ 下一階段", new Vector2(0, -480), new Vector2(200, 50));
-            CreateButton(canvas.transform, "SurrenderBtn", "🏳 投降", new Vector2(800, -480), new Vector2(140, 40));
+            // --- Buttons ---
+            CreateButton(canvas.transform, "EndPhaseBtn", "▶ 下一階段", new Vector2(0, -480), new Vector2(200, 50));
+            CreateButton(canvas.transform, "AttackBtn", "⚔ 攻擊", new Vector2(-220, -480), new Vector2(160, 50));
+            CreateButton(canvas.transform, "SummonBtn", "✨ 召喚", new Vector2(220, -480), new Vector2(160, 50));
+            CreateButton(canvas.transform, "SurrenderBtn", "🏳 投降", new Vector2(400, -480), new Vector2(140, 40));
 
-            // --- Turn Label ---
-            var turnLabel = CreateText(canvas.transform, "TurnLabel", "我方回合", new Vector2(0, 480), 28);
+            // --- Turn / Phase Labels ---
+            CreateText(canvas.transform, "TurnLabel", "我方回合", new Vector2(0, 480), 28);
+            CreateText(canvas.transform, "PhaseLabel", "DP  SP  MP1  BP  MP2  EP", new Vector2(0, 450), 14);
+
+            // --- Message Panel ---
+            var msgPanel = new GameObject("MessagePanel");
+            msgPanel.transform.SetParent(canvas.transform, false);
+            var msgRt = msgPanel.AddComponent<RectTransform>();
+            msgRt.anchoredPosition = Vector2.zero;
+            msgRt.sizeDelta = new Vector2(600, 80);
+            var msgImg = msgPanel.AddComponent<Image>();
+            msgImg.color = new Color(0, 0, 0, 0.7f);
+            msgPanel.AddComponent<CanvasGroup>();
+            CreateText(msgPanel.transform, "MessageText", "", Vector2.zero, 22);
+            msgPanel.SetActive(false);
+
+            // --- Hand Container ---
+            var handContainer = new GameObject("HandContainer");
+            handContainer.transform.SetParent(canvas.transform, false);
+            var handRt = handContainer.AddComponent<RectTransform>();
+            handRt.anchorMin = new Vector2(0, 0);
+            handRt.anchorMax = new Vector2(1, 0);
+            handRt.anchoredPosition = new Vector2(0, 120);
+            handRt.sizeDelta = new Vector2(0, 100);
+
+            // --- Game Log ---
+            var gameLog = new GameObject("GameLog");
+            gameLog.transform.SetParent(canvas.transform, false);
+            var logRt = gameLog.AddComponent<RectTransform>();
+            logRt.anchorMin = new Vector2(1, 0);
+            logRt.anchorMax = new Vector2(1, 0.5f);
+            logRt.anchoredPosition = new Vector2(-150, 0);
+            logRt.sizeDelta = new Vector2(280, 0);
 
             // === EventSystem ===
             var es = new GameObject("EventSystem");
