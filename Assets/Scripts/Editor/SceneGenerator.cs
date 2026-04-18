@@ -78,10 +78,10 @@ namespace CardBattle.Editor
             CreateLPBar(canvas.transform, "Player2LP", new Vector2(-200, -40), Color.red);
 
             // --- Buttons ---
-            CreateButton(canvas.transform, "EndPhaseBtn", "▶ 下一階段", new Vector2(0, -480), new Vector2(200, 50));
-            CreateButton(canvas.transform, "AttackBtn", "⚔ 攻擊", new Vector2(-220, -480), new Vector2(160, 50));
-            CreateButton(canvas.transform, "SummonBtn", "✨ 召喚", new Vector2(220, -480), new Vector2(160, 50));
-            CreateButton(canvas.transform, "SurrenderBtn", "🏳 投降", new Vector2(400, -480), new Vector2(140, 40));
+            CreateButton(canvas.transform, "EndPhaseBtn", "下一階段", new Vector2(0, -480), new Vector2(200, 50));
+            CreateButton(canvas.transform, "AttackBtn", "攻擊", new Vector2(-220, -480), new Vector2(160, 50));
+            CreateButton(canvas.transform, "SummonBtn", "召喚", new Vector2(220, -480), new Vector2(160, 50));
+            CreateButton(canvas.transform, "SurrenderBtn", "投降", new Vector2(400, -480), new Vector2(140, 40));
 
             // --- Turn / Phase Labels ---
             CreateText(canvas.transform, "TurnLabel", "我方回合", new Vector2(0, 480), 28);

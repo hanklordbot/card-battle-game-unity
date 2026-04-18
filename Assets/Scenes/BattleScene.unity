@@ -5239,7 +5239,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '\u6211\u65B9\u56DE\u5408'
+  m_Text: 我方回合
 --- !u!1 &300100039
 GameObject:
   m_ObjectHideFlags: 0
@@ -5421,7 +5421,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '\u25B6 \u4E0B\u4E00\u968E\u6BB5'
+  m_Text: 下一階段
 --- !u!1 &300100049
 GameObject:
   m_ObjectHideFlags: 0
@@ -5603,7 +5603,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '\u2694 \u653B\u64CA'
+  m_Text: 攻擊
 --- !u!1 &300100059
 GameObject:
   m_ObjectHideFlags: 0
@@ -5785,7 +5785,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '\u2728 \u53EC\u559A'
+  m_Text: 召喚
 --- !u!1 &300100069
 GameObject:
   m_ObjectHideFlags: 0
@@ -5967,7 +5967,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '\U0001F3F3 \u6295\u964D'
+  m_Text: 投降
 --- !u!1 &300100080
 GameObject:
   m_ObjectHideFlags: 0

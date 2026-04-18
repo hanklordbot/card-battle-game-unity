@@ -204,7 +204,7 @@ namespace CardBattle.UI
         public void UpdateEndPhaseButtonText(Phase phase)
         {
             if (endPhaseButtonText != null)
-                endPhaseButtonText.text = phase == Phase.Draw ? "▶ 開始回合" : "▶ 下一階段";
+                endPhaseButtonText.text = phase == Phase.Draw ? "開始回合" : "下一階段";
         }
 
         // === Hand ===
